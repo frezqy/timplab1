@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "name": "Новый товар",
+      "id": "1"
+    },
+    {
+      "id": "2",
+      "name": "Товар 2"
+    },
+    {
+      "id": "be5b",
+      "name": "Ноутбук"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
