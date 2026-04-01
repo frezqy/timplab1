@@ -1,44 +1,43 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../api';
 
 const Form = () => {
-  // создаем ссылку для доступа к значению из поля ввода
-  const nameRef = useRef(null);
-  // хук для программного перехода между страницами
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // функция, которая сработает при нажатии на кнопку добавления
   const handleSubmit = (e) => {
-    // предотвращаем стандартную перезагрузку страницы браузером
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // формируем объект с новым товаром
-    const newItemData = {
-      name: nameRef.current.value,
-    };
-
-    // отправляем данные на сервер строго в формате json
-    axios.post("http://localhost:5000/items", JSON.stringify(newItemData), {
-      headers: { "Content-Type": "application/json" }
-    })
-    .then(() => {
-      // если все ок, перекидываем пользователя обратно на главную страницу
-      navigate('/');
-    })
-    .catch(error => console.error("ошибка при создании:", error));
+    api.createItem({ name })
+      .then(() => {
+        navigate('/');
+      })
+      .catch(() => {
+        alert('Ошибка при создании товара');
+        setIsSubmitting(false);
+      });
   };
 
   return (
     <div>
-      <h1>Новый товар</h1>
+      <h1>Добавление товара</h1>
       <form onSubmit={handleSubmit}>
         <label>
           Название:
-          <input type="text" ref={nameRef} required style={{ marginLeft: "10px" }} />
+          <input 
+            type="text" 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            required 
+          />
         </label>
         <br /><br />
-        <button type="submit">Добавить</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Сохранение...' : 'Добавить'}
+        </button>
       </form>
     </div>
   );

@@ -1,60 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { api } from '../api';
 
 const Detail = () => {
-  // достаем id товара из адресной строки
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // состояние для хранения названия товара
-  const [name, setName] = useState('');
+  const [item, setItem] = useState(null);
+  const [isEditing, setIsEditing] = useState(false); // режим редактирования
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editName, setEditName] = useState('');
 
-  // загружаем данные конкретного товара при открытии страницы
   useEffect(() => {
-    axios.get(`http://localhost:5000/items/${id}`)
+    api.getItem(id)
       .then(response => {
-        setName(response.data.name);
+        setItem(response.data);
+        setEditName(response.data.name);
+        setLoading(false);
       })
-      .catch(error => console.error("ошибка загрузки:", error));
+      .catch(() => {
+        setError('Товар не найден или произошла ошибка сервера');
+        setLoading(false);
+      });
   }, [id]);
 
-  // функция сохранения изменений
-  const handleSubmit = (e) => {
-    // отменяем стандартную перезагрузку страницы
+  const handleUpdate = (e) => {
     e.preventDefault();
-
-    // формируем обновленный объект
-    const updatedItem = { name };
-
-    // отправляем put запрос для обновления в формате json
-    axios.put(`http://localhost:5000/items/${id}`, JSON.stringify(updatedItem), {
-      headers: { "Content-Type": "application/json" }
-    })
-    .then(() => {
-      // возвращаемся на главную
-      navigate('/');
-    })
-    .catch(error => console.error("ошибка обновления:", error));
+    api.updateItem(id, { name: editName })
+      .then(response => {
+        setItem(response.data);
+        setIsEditing(false); // выходим из режима редактирования
+      })
+      .catch(() => alert('Ошибка при сохранении изменений'));
   };
+
+  if (loading) return <div>Загрузка данных товара...</div>;
+  if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   return (
     <div>
-      <h1>Редактирование товара</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Название:
-          <input 
-            type="text" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            required 
-            style={{ marginLeft: "10px" }}
-          />
-        </label>
-        <br /><br />
-        <button type="submit">Сохранить</button>
-      </form>
+      <h1>Детальная информация</h1>
+      
+      {!isEditing ? (
+        /* Режим просмотра */
+        <div>
+          <p><strong>ID:</strong> {item.id}</p>
+          <p><strong>Название:</strong> {item.name}</p>
+          <button onClick={() => setIsEditing(true)}>Редактировать</button>
+        </div>
+      ) : (
+        /* Режим редактирования */
+        <form onSubmit={handleUpdate}>
+          <label>
+            Изменить название:
+            <input 
+              type="text" 
+              value={editName} 
+              onChange={(e) => setEditName(e.target.value)} 
+              required 
+            />
+          </label>
+          <br /><br />
+          <button type="submit">Сохранить</button>
+          <button type="button" onClick={() => setIsEditing(false)} style={{ marginLeft: '10px' }}>
+            Отмена
+          </button>
+        </form>
+      )}
+      <br />
+      <Link to="/">Вернуться к списку</Link>
     </div>
   );
 };

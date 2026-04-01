@@ -1,44 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../api'; // импортируем наш сервис
 
 const Home = () => {
-  // создаем локальное состояние для хранения наших товаров
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true); // состояние загрузки
+  const [error, setError] = useState(null);    // состояние ошибки
 
-  // загружаем данные при первой отрисовке страницы
   useEffect(() => {
-    axios.get('http://localhost:5000/items')
+    api.getItems()
       .then(response => {
         setItems(response.data);
+        setLoading(false);
       })
-      .catch(error => console.error("Ошибка загрузки:", error));
+      .catch(err => {
+        setError('Не удалось загрузить список товаров');
+        setLoading(false);
+      });
   }, []);
 
-  // функция для удаления товара по клику на кнопку
-  const deleteItem = (id) => {
-    axios.delete(`http://localhost:5000/items/${id}`)
-      .then(() => {
-        // фильтруем массив, убирая удаленный товар, чтобы интерфейс обновился
-        setItems(items.filter(item => item.id !== id));
-      })
-      .catch(error => console.error("Ошибка удаления:", error));
+  const handleDelete = (id) => {
+    if (window.confirm('Вы уверены, что хотите удалить этот товар?')) {
+      api.deleteItem(id)
+        .then(() => {
+          setItems(items.filter(item => item.id !== id));
+        })
+        .catch(() => alert('Ошибка при удалении'));
+    }
   };
+
+  if (loading) return <div>Загрузка списка товаров...</div>; // наш "спиннер"
+  if (error) return <div style={{ color: 'red' }}>{error}</div>; // отображение ошибки
 
   return (
     <div>
       <h1>Список товаров</h1>
       <ul>
         {items.map(item => (
-          <li key={item.id} style={{ marginBottom: "10px" }}>
+          <li key={item.id} style={{ marginBottom: '10px' }}>
             <Link to={`/detail/${item.id}`}>{item.name}</Link>
-            <button onClick={() => deleteItem(item.id)} style={{ marginLeft: "10px" }}>
+            <button onClick={() => handleDelete(item.id)} style={{ marginLeft: '10px' }}>
               Удалить
             </button>
           </li>
         ))}
       </ul>
-      <Link to="/add">Добавить товар</Link>
+      <Link to="/add">Добавить новый товар</Link>
     </div>
   );
 };
