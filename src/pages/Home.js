@@ -8,16 +8,19 @@ const Home = () => {
   const [error, setError] = useState(null);    // состояние ошибки
 
   useEffect(() => {
+    console.log("Пытаюсь загрузить данные..."); 
     api.getItems()
-      .then(response => {
-        setItems(response.data);
+      .then(res => {
+        console.log("Данные получены:", res.data); 
+        setItems(res.data);
         setLoading(false);
       })
       .catch(err => {
-        setError('Не удалось загрузить список товаров');
+        console.error("Ошибка запроса:", err); 
         setLoading(false);
       });
   }, []);
+
 
   const handleDelete = (id) => {
     if (window.confirm('Вы уверены, что хотите удалить этот товар?')) {
