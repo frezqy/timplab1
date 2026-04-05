@@ -19,4 +19,5 @@ export const api = {
   }),
   // удаление товара
   deleteItem: (id) => axios.delete(`${API_URL}/${id}`)
-};
+}; 
+ 
