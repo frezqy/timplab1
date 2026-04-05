@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // базовый адрес нашего сервера
-const API_URL = 'http://localhost:5000/items';
+const API_URL = 'https://timplab1.onrender.com';
 
 // экспортируем объект со всеми нужными функциями
 export const api = {
