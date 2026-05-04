@@ -13,7 +13,7 @@ function Home() {
   // 1. Загрузка данных при изменении страницы или поиска
   useEffect(() => {
     setIsLoading(true);
-    getItems(page, 6, search)
+    getItems(page, 12, search)
       .then(res => {
         let fetchedData = [];
         if (Array.isArray(res.data)) {
@@ -29,7 +29,7 @@ function Home() {
         }
         
         // Если пришло меньше 6 элементов или вообще пусто - значит это конец базы
-        setHasMore(fetchedData && fetchedData.length === 6);
+        setHasMore(fetchedData && fetchedData.length === 12);
       })
       .catch(err => {
         console.error(err);
