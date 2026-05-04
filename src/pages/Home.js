@@ -1,45 +1,72 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { getItems, deleteItem } from '../api';
 
 function Home() {
   const [incidents, setIncidents] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [search, setSearch] = useState('');
 
-  // получение данных с сервера
+  // загрузка данных при изменении страницы или поискового запроса
   useEffect(() => {
-    fetchIncidents();
-  }, []);
-
-  const fetchIncidents = () => {
-    getItems()
+    setIsLoading(true);
+    getItems(page, 6, search)
       .then(res => {
-        setIncidents(res.data);
-        setIsLoading(false);
+        if (page === 1) {
+          setIncidents(res.data);
+        } else {
+          setIncidents(prev => [...prev, ...res.data]);
+        }
+        
+        // если сервер вернул меньше 6 записей значит больше подгружать нечего
+        setHasMore(res.data.length === 6);
       })
-      .catch(err => {
-        setError('ошибка при загрузке данных');
+      .catch(() => {
+        toast.error('ошибка при связи с сервером безопасности');
+      })
+      .finally(() => {
         setIsLoading(false);
       });
+  }, [page, search]);
+
+  // сброс пагинации при вводе нового текста в поиск
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(1);
   };
 
-  // удаление инцидента
+  // обработка удаления с уведомлением
   const handleDelete = (id) => {
-    deleteItem(id).then(() => {
-      setIncidents(incidents.filter(incident => incident.id !== id));
-    });
+    deleteItem(id)
+      .then(() => {
+        setIncidents(incidents.filter(incident => incident.id !== id));
+        toast.success('инцидент успешно удален из базы');
+      })
+      .catch(() => {
+        toast.error('не удалось удалить инцидент');
+      });
   };
-
-  if (isLoading) return <div className="loader">Загрузка данных безопасности...</div>;
-  if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="container">
       <div className="header">
         <h1>Панель инцидентов ИБ</h1>
-        <Link to="/add" className="btn btn-primary">Добавить инцидент</Link>
+        <Link to="/add" className="btn btn-primary">Зарегистрировать угрозу</Link>
       </div>
+
+      <div className="search-bar">
+        <input 
+          type="text" 
+          placeholder="Поиск по названию инцидента..." 
+          value={search}
+          onChange={handleSearchChange}
+          className="search-input"
+        />
+      </div>
+
       <div className="grid">
         {incidents.map(incident => (
           <div key={incident.id} className="card">
@@ -58,6 +85,22 @@ function Home() {
           </div>
         ))}
       </div>
+
+      {incidents.length === 0 && !isLoading && (
+        <div className="empty-state">Угроз не найдено. Инфраструктура в безопасности!</div>
+      )}
+
+      {hasMore && incidents.length > 0 && (
+        <div className="load-more-container">
+          <button 
+            className="btn btn-secondary load-more-btn" 
+            onClick={() => setPage(prev => prev + 1)}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Загрузка...' : 'Показать еще угрозы'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

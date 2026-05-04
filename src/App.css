@@ -131,3 +131,44 @@ body {
 /* состояния загрузки и ошибок */
 .loader { text-align: center; font-size: 1.2rem; margin-top: 50px; }
 .error { color: #d32f2f; text-align: center; font-size: 1.2rem; }
+
+/* стили для поиска и подгрузки */
+.search-bar {
+  margin-bottom: 25px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  border-color: #1565c0;
+  outline: none;
+}
+
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.load-more-btn {
+  padding: 12px 24px;
+  font-size: 1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-top: 20px;
+}
