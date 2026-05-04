@@ -10,14 +10,11 @@ function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
 
-  // загрузка данных при изменении страницы или поискового запроса
+  // 1. Загрузка данных при изменении страницы или поиска
   useEffect(() => {
     setIsLoading(true);
     getItems(page, 6, search)
       .then(res => {
-        // выводим ответ сервера в консоль для проверки
-        console.log('ответ от сервера:', res.data);
-
         let fetchedData = [];
         if (Array.isArray(res.data)) {
           fetchedData = res.data;
@@ -31,33 +28,52 @@ function Home() {
           setIncidents(prev => [...prev, ...fetchedData]);
         }
         
-        setHasMore(fetchedData && fetchedData.length > 0);
+        // Если пришло меньше 6 элементов или вообще пусто - значит это конец базы
+        setHasMore(fetchedData && fetchedData.length === 6);
       })
       .catch(err => {
-        // выводим ошибку в консоль
-        console.error('ошибка сети:', err);
-        toast.error('ошибка при связи с сервером безопасности');
+        console.error(err);
+        toast.error('ошибка при загрузке инцидентов');
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, [page, search]);
 
-  // сброс пагинации при вводе нового текста в поиск
+  // 2. Магия бесконечного скролла (Infinite Scroll)
+  useEffect(() => {
+    const handleScroll = () => {
+      // Вычисляем, докрутил ли пользователь до низа страницы (с запасом в 100 пикселей)
+      const isBottom = 
+        window.innerHeight + document.documentElement.scrollTop + 100 >= 
+        document.documentElement.scrollHeight;
+
+      // Если дошли до низа, есть еще данные и прямо сейчас ничего не грузится
+      if (isBottom && hasMore && !isLoading) {
+        setPage(prevPage => prevPage + 1); // автоматически грузим следующую страницу
+      }
+    };
+
+    // Вешаем слушатель при монтировании и убираем при размонтировании
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasMore, isLoading]);
+
+  // 3. Обработка поиска
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1);
+    setPage(1); // сбрасываем на первую страницу при новом поиске
   };
 
-  // обработка удаления с уведомлением
+  // 4. Удаление
   const handleDelete = (id) => {
     deleteItem(id)
       .then(() => {
         setIncidents(incidents.filter(incident => incident.id !== id));
-        toast.success('инцидент успешно удален из базы');
+        toast.success('инцидент успешно удален');
       })
       .catch(() => {
-        toast.error('не удалось удалить инцидент');
+        toast.error('не удалось удалить запись');
       });
   };
 
@@ -101,15 +117,10 @@ function Home() {
         <div className="empty-state">Угроз не найдено. Инфраструктура в безопасности!</div>
       )}
 
-      {hasMore && incidents.length > 0 && (
+      {/* Индикатор загрузки в самом низу при скролле */}
+      {isLoading && (
         <div className="load-more-container">
-          <button 
-            className="btn btn-secondary load-more-btn" 
-            onClick={() => setPage(prev => prev + 1)}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Загрузка...' : 'Показать еще угрозы'}
-          </button>
+          <p>Подгружаем данные...</p>
         </div>
       )}
     </div>
