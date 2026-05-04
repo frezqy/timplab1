@@ -5,9 +5,9 @@ const api = axios.create({
   baseURL: 'https://timplab1.onrender.com'
 });
 
-// получение инцидентов с учетом пагинации и поиска
+// получение инцидентов с учетом новой версии json-server
 export const getItems = (page = 1, limit = 6, query = '') => {
-  let url = `/items?_page=${page}&_limit=${limit}`;
+  let url = `/items?_page=${page}&_per_page=${limit}`;
   if (query) {
     url += `&q=${query}`;
   }

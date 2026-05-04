@@ -15,7 +15,9 @@ function Home() {
     setIsLoading(true);
     getItems(page, 6, search)
       .then(res => {
-        // безопасно извлекаем массив при любом ответе сервера
+        // выводим ответ сервера в консоль для проверки
+        console.log('ответ от сервера:', res.data);
+
         let fetchedData = [];
         if (Array.isArray(res.data)) {
           fetchedData = res.data;
@@ -29,10 +31,11 @@ function Home() {
           setIncidents(prev => [...prev, ...fetchedData]);
         }
         
-        // проверяем остались ли еще записи для подгрузки
-        setHasMore(fetchedData && fetchedData.length === 6);
+        setHasMore(fetchedData && fetchedData.length > 0);
       })
-      .catch(() => {
+      .catch(err => {
+        // выводим ошибку в консоль
+        console.error('ошибка сети:', err);
         toast.error('ошибка при связи с сервером безопасности');
       })
       .finally(() => {
