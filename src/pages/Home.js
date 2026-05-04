@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getItems, deleteItem } from '../api';
-import './Home.css';
 
 function Home() {
   const [incidents, setIncidents] = useState([]);
