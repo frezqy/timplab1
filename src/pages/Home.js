@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getItems, deleteItem } from '../api';
 
-function Home() {
+function Home({ setIsAuth }) {
   const [incidents, setIncidents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
-  // 1. Загрузка данных при изменении страницы или поиска
   useEffect(() => {
     setIsLoading(true);
     getItems(page, 12, search)
@@ -28,66 +28,91 @@ function Home() {
           setIncidents(prev => [...prev, ...fetchedData]);
         }
         
-        // Если пришло меньше 6 элементов или вообще пусто - значит это конец базы
         setHasMore(fetchedData && fetchedData.length === 12);
       })
       .catch(err => {
-        console.error(err);
-        toast.error('ошибка при загрузке инцидентов');
+        toast.error('ошибка при получении данных с сервера');
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, [page, search]);
 
-  // 2. Магия бесконечного скролла (Infinite Scroll)
   useEffect(() => {
     const handleScroll = () => {
-      // Вычисляем, докрутил ли пользователь до низа страницы (с запасом в 100 пикселей)
       const isBottom = 
         window.innerHeight + document.documentElement.scrollTop + 100 >= 
         document.documentElement.scrollHeight;
 
-      // Если дошли до низа, есть еще данные и прямо сейчас ничего не грузится
       if (isBottom && hasMore && !isLoading) {
-        setPage(prevPage => prevPage + 1); // автоматически грузим следующую страницу
+        setPage(prevPage => prevPage + 1);
       }
     };
 
-    // Вешаем слушатель при монтировании и убираем при размонтировании
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [hasMore, isLoading]);
 
-  // 3. Обработка поиска
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1); // сбрасываем на первую страницу при новом поиске
+    setPage(1);
   };
 
-  // 4. Удаление
-  const handleDelete = (id) => {
+  // физическое удаление на сервере
+  const confirmDelete = (id, toastId) => {
+    toast.dismiss(toastId);
     deleteItem(id)
       .then(() => {
         setIncidents(incidents.filter(incident => incident.id !== id));
-        toast.success('инцидент успешно удален');
+        toast.success('инцидент окончательно удален');
       })
       .catch(() => {
-        toast.error('не удалось удалить запись');
+        toast.error('не удалось удалить инцидент');
       });
+  };
+
+  // отмена удаления
+  const cancelDelete = (toastId) => {
+    toast.dismiss(toastId);
+    toast.info('удаление отменено');
+  };
+
+  // показ алёрта с выбором действия
+  const handleDeleteRequest = (id) => {
+    const toastId = toast(
+      <div className="toast-confirm">
+        <p>вы уверены, что хотите удалить этот инцидент?</p>
+        <div className="toast-buttons">
+          <button className="btn btn-danger btn-sm" onClick={() => confirmDelete(id, toastId)}>да, удалить</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => cancelDelete(toastId)}>отмена</button>
+        </div>
+      </div>,
+      { autoClose: false, closeButton: false }
+    );
+  };
+
+  // выход из системы
+  const handleLogout = () => {
+    localStorage.removeItem('auth');
+    setIsAuth(false);
+    toast.info('вы вышли из системы');
+    navigate('/login');
   };
 
   return (
     <div className="container">
       <div className="header">
         <h1>Панель инцидентов ИБ</h1>
-        <Link to="/add" className="btn btn-primary">Зарегистрировать угрозу</Link>
+        <div className="header-actions">
+          <Link to="/add" className="btn btn-primary">зарегистрировать угрозу</Link>
+          <button onClick={handleLogout} className="btn btn-secondary" style={{ marginLeft: '10px' }}>выйти</button>
+        </div>
       </div>
 
       <div className="search-bar">
         <input 
           type="text" 
-          placeholder="Поиск по названию инцидента..." 
+          placeholder="поиск по названию инцидента..." 
           value={search}
           onChange={handleSearchChange}
           className="search-input"
@@ -103,24 +128,23 @@ function Home() {
                 {incident.severity}
               </span>
             </div>
-            <p><strong>Цель:</strong> {incident.target}</p>
-            <p><strong>Статус:</strong> {incident.status}</p>
+            <p><strong>цель:</strong> {incident.target}</p>
+            <p><strong>статус:</strong> {incident.status}</p>
             <div className="card-actions">
-              <Link to={`/detail/${incident.id}`} className="btn btn-secondary">Детали</Link>
-              <button onClick={() => handleDelete(incident.id)} className="btn btn-danger">Удалить</button>
+              <Link to={`/detail/${incident.id}`} className="btn btn-secondary">детали</Link>
+              <button onClick={() => handleDeleteRequest(incident.id)} className="btn btn-danger">удалить</button>
             </div>
           </div>
         ))}
       </div>
 
       {incidents.length === 0 && !isLoading && (
-        <div className="empty-state">Угроз не найдено. Инфраструктура в безопасности!</div>
+        <div className="empty-state">угроз не найдено. инфраструктура в безопасности!</div>
       )}
 
-      {/* Индикатор загрузки в самом низу при скролле */}
       {isLoading && (
         <div className="load-more-container">
-          <p>Подгружаем данные...</p>
+          <p>подгружаем данные...</p>
         </div>
       )}
     </div>

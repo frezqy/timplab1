@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { createItem } from '../api';
+import './Form.css';
 
 function Form() {
   const navigate = useNavigate();
@@ -13,17 +15,27 @@ function Form() {
     description: ''
   });
 
-  // обновление стейта при вводе
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // отправка формы на сервер
+  // отправка формы с алёртами
   const handleSubmit = (e) => {
     e.preventDefault();
-    createItem(formData).then(() => {
-      navigate('/');
-    });
+    createItem(formData)
+      .then(() => {
+        toast.success('новый инцидент успешно добавлен');
+        navigate('/');
+      })
+      .catch(() => {
+        toast.error('произошла ошибка при сохранении');
+      });
+  };
+
+  // отмена добавления
+  const handleCancel = () => {
+    toast.info('добавление инцидента отменено');
+    navigate('/');
   };
 
   return (
@@ -31,12 +43,12 @@ function Form() {
       <h2>Регистрация нового инцидента</h2>
       <form onSubmit={handleSubmit} className="security-form">
         <div className="form-group">
-          <label>Название угрозы:</label>
+          <label>название угрозы:</label>
           <input type="text" name="title" required value={formData.title} onChange={handleChange} />
         </div>
         
         <div className="form-group">
-          <label>Критичность:</label>
+          <label>критичность:</label>
           <select name="severity" value={formData.severity} onChange={handleChange}>
             <option value="Низкая">Низкая</option>
             <option value="Средняя">Средняя</option>
@@ -46,7 +58,7 @@ function Form() {
         </div>
 
         <div className="form-group">
-          <label>Статус:</label>
+          <label>статус:</label>
           <select name="status" value={formData.status} onChange={handleChange}>
             <option value="Открыт">Открыт</option>
             <option value="В работе">В работе</option>
@@ -55,23 +67,23 @@ function Form() {
         </div>
 
         <div className="form-group">
-          <label>Атакованный узел:</label>
+          <label>атакованный узел:</label>
           <input type="text" name="target" required value={formData.target} onChange={handleChange} />
         </div>
 
         <div className="form-group">
-          <label>Дата инцидента:</label>
+          <label>дата инцидента:</label>
           <input type="date" name="date" required value={formData.date} onChange={handleChange} />
         </div>
 
         <div className="form-group">
-          <label>Описание:</label>
+          <label>описание:</label>
           <textarea name="description" required value={formData.description} onChange={handleChange}></textarea>
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="btn btn-primary">Зарегистрировать</button>
-          <button type="button" className="btn btn-secondary" onClick={() => navigate('/')}>Отмена</button>
+          <button type="submit" className="btn btn-primary">зарегистрировать</button>
+          <button type="button" className="btn btn-secondary" onClick={handleCancel}>отмена</button>
         </div>
       </form>
     </div>
