@@ -1,23 +1,13 @@
 import axios from 'axios';
 
-// базовый адрес нашего сервера
-const API_URL = 'https://timplab1.onrender.com/items';
+// настройка подключения к серверу
+const api = axios.create({
+  baseURL: 'https://timplab1.onrender.com'
+});
 
-// экспортируем объект со всеми нужными функциями
-export const api = {
-  // получение всех товаров
-  getItems: () => axios.get(API_URL),
-  // получение одного товара по айди
-  getItem: (id) => axios.get(`${API_URL}/${id}`),
-  // создание нового товара
-  createItem: (item) => axios.post(API_URL, JSON.stringify(item), { 
-    headers: { "Content-Type": "application/json" } 
-  }),
-  // обновление существующего товара
-  updateItem: (id, item) => axios.put(`${API_URL}/${id}`, JSON.stringify(item), { 
-    headers: { "Content-Type": "application/json" } 
-  }),
-  // удаление товара
-  deleteItem: (id) => axios.delete(`${API_URL}/${id}`)
-}; 
- 
+// получение всех данных
+export const getItems = () => api.get('/items');
+export const getItem = (id) => api.get(`/items/${id}`);
+export const createItem = (data) => api.post('/items', data);
+export const updateItem = (id, data) => api.put(`/items/${id}`, data);
+export const deleteItem = (id) => api.delete(`/items/${id}`);

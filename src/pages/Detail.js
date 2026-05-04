@@ -1,77 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { api } from '../api';
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { getItem } from '../api';
+import './Detail.css';
 
-const Detail = () => {
+function Detail() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  
-  const [item, setItem] = useState(null);
-  const [isEditing, setIsEditing] = useState(false); // режим редактирования
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editName, setEditName] = useState('');
+  const [incident, setIncident] = useState(null);
 
+  // загрузка информации по id
   useEffect(() => {
-    api.getItem(id)
-      .then(response => {
-        setItem(response.data);
-        setEditName(response.data.name);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Товар не найден или произошла ошибка сервера');
-        setLoading(false);
-      });
+    getItem(id).then(res => setIncident(res.data));
   }, [id]);
 
-  const handleUpdate = (e) => {
-    e.preventDefault();
-    api.updateItem(id, { name: editName })
-      .then(response => {
-        setItem(response.data);
-        setIsEditing(false); // выходим из режима редактирования
-      })
-      .catch(() => alert('Ошибка при сохранении изменений'));
-  };
-
-  if (loading) return <div>Загрузка данных товара...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (!incident) return <div className="loader">поиск деталей...</div>;
 
   return (
-    <div>
-      <h1>Детальная информация</h1>
-      
-      {!isEditing ? (
-        /* Режим просмотра */
-        <div>
-          <p><strong>ID:</strong> {item.id}</p>
-          <p><strong>Название:</strong> {item.name}</p>
-          <button onClick={() => setIsEditing(true)}>Редактировать</button>
+    <div className="container detail-container">
+      <div className="detail-card">
+        <h2>{incident.title}</h2>
+        <div className="detail-info">
+          <p><strong>ID инцидента:</strong> {incident.id}</p>
+          <p><strong>Дата обнаружения:</strong> {incident.date}</p>
+          <p><strong>Цель:</strong> {incident.target}</p>
+          <p><strong>Критичность:</strong> <span className="highlight">{incident.severity}</span></p>
+          <p><strong>Текущий статус:</strong> {incident.status}</p>
         </div>
-      ) : (
-        /* Режим редактирования */
-        <form onSubmit={handleUpdate}>
-          <label>
-            Изменить название:
-            <input 
-              type="text" 
-              value={editName} 
-              onChange={(e) => setEditName(e.target.value)} 
-              required 
-            />
-          </label>
-          <br /><br />
-          <button type="submit">Сохранить</button>
-          <button type="button" onClick={() => setIsEditing(false)} style={{ marginLeft: '10px' }}>
-            Отмена
-          </button>
-        </form>
-      )}
-      <br />
-      <Link to="/">Вернуться к списку</Link>
+        <div className="detail-desc">
+          <h3>Описание:</h3>
+          <p>{incident.description}</p>
+        </div>
+        <Link to="/" className="btn btn-secondary">Вернуться к списку</Link>
+      </div>
     </div>
   );
-};
+}
 
 export default Detail;
