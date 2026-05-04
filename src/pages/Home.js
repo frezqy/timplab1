@@ -15,14 +15,17 @@ function Home() {
     setIsLoading(true);
     getItems(page, 6, search)
       .then(res => {
+        // извлекаем массив данных независимо от структуры ответа json-server
+        const fetchedData = Array.isArray(res.data) ? res.data : res.data.data;
+
         if (page === 1) {
-          setIncidents(res.data);
+          setIncidents(fetchedData);
         } else {
-          setIncidents(prev => [...prev, ...res.data]);
+          setIncidents(prev => [...prev, ...fetchedData]);
         }
         
         // если сервер вернул меньше 6 записей значит больше подгружать нечего
-        setHasMore(res.data.length === 6);
+        setHasMore(fetchedData && fetchedData.length === 6);
       })
       .catch(() => {
         toast.error('ошибка при связи с сервером безопасности');
